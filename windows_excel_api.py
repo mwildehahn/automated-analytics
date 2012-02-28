@@ -6,15 +6,30 @@ from win32com.client import DispatchEx, Dispatch
 
 
 class ExcelPathNotFound(Exception):
-    pass
+    def __init__(self, filename, action):
+        self.filename = filename
+        self.action = action
+
+    def __str__(self):
+        return 'Error %s file: %s, check to make sure path exists' % (
+            self.action,
+            self.filename,
+        )
 
 
-class InvalidSheetNumber(Exception):
-    pass
+class BaseReferenceError(Exception):
+    def __init__(self, reference):
+        self.reference = reference
 
 
-class WorkBookDoesNotExist(Exception):
-    pass
+class InvalidSheet(BaseReferenceError):
+    def __str__(self):
+        return 'Error: referencing an invalid sheet, %s' % self.reference
+
+
+class WorksheetNotFound(BaseReferenceError):
+    def __str__(self):
+        return 'Worksheet: %s, not found' % self.reference
 
 
 class ExcelApi(object):
@@ -47,10 +62,7 @@ class ExcelApi(object):
             try:
                 self.excel_book.SaveAs(filename, excel_type)
             except:
-                raise NameError(
-                    'Error writing file: %s, check to make sure path exists' \
-                        % filename
-                )
+                raise ExcelPathNotFound(filename, 'saving')
 
     def open_workbook(self, filename, add_book=True):
         try:
@@ -62,14 +74,10 @@ class ExcelApi(object):
                     self.save_as(filename)
                 except:
                     self.quit()
-                    raise NameError(
-                        'Error writing file: %s, check to make sure \
-                            path exists' % filename
-                    )
+                    raise ExcelPathNotFound(filename, 'writing')
             else:
                 self.quit()
-                raise NameError('Error opening file: %s, check to make sure \
-                    path exists.' % filename)
+                raise ExcelPathNotFound(filename, 'opening')
 
     def open_spreadsheet(self, sheet, filename=None, add_sheet=True):
         if not hasattr(self, 'excel_book'):
@@ -81,21 +89,25 @@ class ExcelApi(object):
             sheet_num = int(sheet)
             try:
                 self.excel_sheet = self.excel_book.Sheets(sheet_num)
-            except InvalidSheetNumber:
-                print 'Error, referencing an invalid sheet'
-                raise
+            except:
+                raise InvalidSheet(sheet_num)
         except ValueError:
             worksheet_names = [self.excel_book.Sheets(i).Name for i
                 in range(1, self.excel_book.Sheets.Count + 1)]
             if sheet not in worksheet_names:
                 if add_sheet:
                     print 'Worksheet, "%s", not found. Adding worksheet' % sheet
-                    self.excel_book.Sheets.Add(
-                        After=self.excel_book.Sheets(
-                            self.excel_book.Sheets.Count)).Name = sheet
+                    try:
+                        self.excel_book.Sheets.Add(
+                            After=self.excel_book.Sheets(
+                                self.excel_book.Sheets.Count)).Name = sheet
+                    except:
+                        raise InvalidSheet(
+                            '%s, is invalid. Add manually to see Excel Error' \
+                            % sheet
+                        )
                 else:
-                    print 'Worksheet, "%s", not found.' % sheet
-                    return
+                    raise WorksheetNotFound(sheet)
             self.excel_sheet = self.excel_book.Sheets(sheet)
         self.excel_sheet.Activate()
 

@@ -1,0 +1,3 @@
+Various functions I wrote as an analyst to automate company reports.
+
+The excel library is OS dependent. See docs if your curious why.

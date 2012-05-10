@@ -1,9 +1,13 @@
 from emailfunctions import send_email
 import traceback
 
-def logerrors(to_email, cron_file,
-    subject='Cron Error', include_traceback=True):
-    """ Decrator to send an email if a function fails.
+def logerrors(
+        to_email,
+        cron_file,
+        subject='Cron Error',
+        include_traceback=True,
+    ):
+    """ Decorator to send an email if a function fails.
 
     args:
         to_email: needs to be a list of emails to notify, ie.

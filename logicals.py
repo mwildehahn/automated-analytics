@@ -74,45 +74,6 @@ def accumarray(accum_by, accum_value, function=sum, none=0):
     else:
         print 'Check the inputs, they weren\'t the same length'
 
-# deprecated version
-def accumarray_depracated(accum_by, accum_value,function=sum, none=0):
-	## check to make sure all the inputs are the same length
-	if sum([1 for i in map(len,accum_by) if i == len(accum_value)])/len([1 for i in map(len,accum_by) if i == len(accum_value)]):
-		# if max(accum_by[0]) == min(accum_by[0]):
-			# out_array = np.empty([1,max(map(lambda x:x+1,accum_by[1]))],'object')
-		# else:
-		out_array = np.empty((map(max,(map(lambda x: x+1,accum_by)))),'object')
-		for i in range(len(accum_by[0])):
-			index = [0]*len(accum_by)
-			for j in range(len(accum_by)):
-				index[j] = accum_by[j][i]
-			index = tuple(index)
-			try:
-				t=len(out_array[index])
-				out_array[index].append(accum_value[i])
-			except:
-				out_array[index] = []
-				out_array[index].append(accum_value[i])
-		for i in range(len(accum_by[0])):
-			index = [0]*len(accum_by)
-			for j in range(len(accum_by)):
-				index[j] = accum_by[j][i]
-			index = tuple(index)
-			try:
-				t = len(out_array[index])
-				out_array[index] = function(out_array[index])
-			except:
-				pass
-		if none:
-		    return out_array
-		else:
-			for row in out_array:
-				tf = logical_tf('and', row < 0)
-				row[tf] =0
-			return out_array
-	else:
-		print 'Check the inputs, they weren\'t the same length'
-
 def sort_table(unsortedtable,sortcolumn=0,type='asc'):
 	if '|S' in str(unsortedtable.dtype):
 		float_vec = np.vectorize(float)

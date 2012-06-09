@@ -12,26 +12,26 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from robo_configs import (
     robo_user,
-    robo_passwd,
+    robo_password,
 )
 
 def sendemail_attach(
         fromaddr=robo_user,
-        pswd=robo_passwd,
+        password=robo_password,
         message=None,
         subject=None,
         to=None,
         cc=[],
-        attachment=0,
-        attachmentname=0,
-        html=0
+        attachment=False,
+        attachmentname=None,
+        html=None,
     ):
     """Function to send an email with an attachment.
 
     kwargs:
 
     fromaddr -- sender email address
-    pswd -- sender password
+    password -- sender password
     message -- text message contents
     subject -- email subject
     to -- list of emails to send email to ie. to=['you@me.com', 'her@me.com',
@@ -51,34 +51,29 @@ def sendemail_attach(
     emailMsg.attach(MIMEText(message, 'plain', _charset='UTF-8'))
     if html:
         emailMsg.attach(MIMEText(html, 'html'))
-    if attachment != 0:
+    if attachment:
         ctype,encoding = mimetypes.guess_type(attachment)
         if ctype is None or encoding is not None:
             ctype = 'application/octet-stream'
         maintype, subtype = ctype.split('/', 1)
         if maintype == 'text':
-            fp = open(attachment)
-            msg = MIMEText(fp.read(), _subtype=subtype)
-            fp.close()
+            with open(attachment, 'r') as attachment_file:
+                msg = MIMEText(attachment_file.read(), _subtype=subtype)
         elif maintype == 'image':
-            fp = open(attachment, 'rb')
-            msg = MIMEImage(fp.read(), _subtype=subtype)
-            fp.close()
+            with open(attachment, 'r') as attachment_file:
+                msg = MIMEImage(attachment_file.read(), _subtype=subtype)
         else:
-            fp = open(attachment,'rb')
             msg = MIMEBase(maintype, subtype)
-            msg.set_payload(fp.read())
-            fp.close()
+            with open(attachment, 'r') as attachment_file:
+                msg.set_payload(attachment_file.read())
             encoders.encode_base64(msg)
         msg.add_header('Content-Disposition',
             'attachment', filename=attachmentname)
         emailMsg.attach(msg)
     composed = emailMsg.as_string()
-    username = fromaddr
-    password = pswd
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.starttls()
-    server.login(username, password)
+    server.login(fromaddr, password)
     server.sendmail(fromaddr, to, composed)
     server.quit()
 

@@ -1,9 +1,23 @@
-
 import setpath
 import string
 
 from numpy import *
-from win32com.client import DispatchEx, Dispatch
+from win32com.client import DispatchEx
+
+import csv
+
+
+class ExcelFatalError(Exception):
+    """This is when excel totally blows up.
+
+    I've only seen this happen a few times and it looks like its an issue with
+    corrupted files or weird windows registery issues. I spent hours going
+    through win32com library trying to dig into what was actually going on to
+    no avail. Sometimes it works, other times it doesn't. When all else fails,
+    write a custom exception class called 'FatalError'...
+
+    """
+    pass
 
 
 class ExcelPathNotFound(Exception):
@@ -79,6 +93,18 @@ class ExcelApi(object):
             else:
                 self.quit()
                 raise ExcelPathNotFound(filename, 'opening')
+        try:
+            # hack to get around weird, weird, weird, WEIRD, occurrence where
+            # some excel files that are opened will treat methods such as
+            # 'Close' and 'Save' as properties, not methods. I guess it happens
+            # often enough because they wrote the `_FlagAsMethod` method in the
+            # first place...
+            self.excel_book._FlagAsMethod('Close')
+        except:
+            raise ExcelFatalError((
+                'Corrupted file. You must re-instantiate the ExcelApi '
+                'with `visible`=True'
+            ))
 
     def open_spreadsheet(self, sheet, filename=None, add_sheet=True):
         if not hasattr(self, 'excel_book'):
@@ -116,7 +142,9 @@ class ExcelApi(object):
         if not hasattr(self, 'excel_book'):
             if not filename:
                 raise NameError('Filename must be provided')
-            self.open_spreadsheet(filename, sheet)
+            self.open_workbook(filename, add_book=add_book)
+
+        self.open_spreadsheet(sheet)
 
         column_range = self.excel_sheet.Range('1:1')
         num_columns = int(self.excel.WorksheetFunction.CountA(column_range))
@@ -176,7 +204,8 @@ class ExcelApi(object):
                 raise NameError('Filename must be provided')
             self.open_workbook(filename)
 
-        self.open_spreadsheet(sheet)
+        self.open_spreadsheet(sheet, add_sheet=False)
+
         self.excel_sheet.Range(cellrange.upper()).Select()
         self.excel.selection.ClearContents()
         if quit:

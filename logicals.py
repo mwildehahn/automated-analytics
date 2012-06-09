@@ -1,10 +1,9 @@
 import numpy as np
 import getopt
 
-def get_cml_args(argv, short_cmd, long_cmd):
-    """short_cmd = "w:d:l..." long_cmd = ["run_weekly="]"""
-    opts, args = getopt.getopt(argv, short_cmd, long_cmd)
-    return opts
+# These are really outdated and written while I was still learning python,
+# attempting to merge over matlab functions. `accumarray` is the only one that
+# is still used heavily.
 
 def ismember(list1,list2,just_tf=0):
 	aL1 = np.array(list1)
@@ -105,7 +104,3 @@ def stack_dict(dictionary,headers = 0):
 	else:
 		table = np.column_stack((dictionary.values()))
 	return table
-
-def uniqueCount(inlist):
-    temp = dict.fromkeys(inlist)
-    return len(temp.keys())
